@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QUIMICA.LAB</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#050811;--surface:#0b1120;--card:#0f1929;--border:rgba(0,200,255,0.12);--accent:#00d4ff;--accent2:#ff6b35;--accent3:#7fff00;--accent4:#bf5fff;--text:#e8f4f8;--muted:#6a8fa8}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden;cursor:none}
+#cur-dot{position:fixed;top:0;left:0;width:8px;height:8px;background:var(--accent);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);box-shadow:0 0 12px var(--accent);transition:background .15s,width .1s,height .1s}
+#cur-ring{position:fixed;top:0;left:0;width:36px;height:36px;border:1.5px solid rgba(0,212,255,.45);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:left .09s,top .09s,width .2s,height .2s,border-color .2s}
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 48px;background:rgba(5,8,17,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:3px;color:var(--accent)}
+.nav-logo span{color:var(--accent2)}
+.nav-links{display:flex;gap:28px}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:11px;font-family:'Space Mono',monospace;letter-spacing:1px;transition:color .2s;position:relative}
+.nav-links a::after{content:'';position:absolute;bottom:-3px;left:0;right:100%;height:1px;background:var(--accent);transition:right .3s}
+.nav-links a:hover{color:var(--accent)}
+.nav-links a:hover::after{right:0}
+#hero{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 24px 60px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.25);border-radius:999px;padding:6px 18px;font-family:'Space Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:2px;margin-bottom:28px;animation:fsd .8s ease both}
+.hero-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--accent3);animation:pulse 1.5s infinite}
+.hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(64px,10vw,140px);line-height:.9;margin-bottom:24px;animation:fsd .8s .1s ease both}
+.hero-title .l1{display:block}
+.hero-title .l2{display:block;background:linear-gradient(90deg,var(--accent),var(--accent4),var(--accent2));background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:gradShift 4s infinite}
+.hero-sub{max-width:500px;color:var(--muted);font-size:17px;line-height:1.7;margin-bottom:44px;animation:fsd .8s .2s ease both}
+.hero-sub em{color:var(--accent);font-style:normal}
+.hero-btns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;animation:fsd .8s .3s ease both}
+.btn-p{padding:13px 34px;background:var(--accent);color:var(--bg);font-family:'Space Mono',monospace;font-size:12px;font-weight:700;letter-spacing:1px;border:none;border-radius:4px;cursor:none;transition:transform .2s,box-shadow .2s;box-shadow:0 0 30px rgba(0,212,255,.3)}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 0 50px rgba(0,212,255,.5)}
+.btn-s{padding:13px 34px;background:transparent;color:var(--accent);font-family:'Space Mono',monospace;font-size:12px;letter-spacing:1px;border:1px solid rgba(0,212,255,.35);border-radius:4px;cursor:none;transition:background .2s,transform .2s}
+.btn-s:hover{background:rgba(0,212,255,.07);transform:translateY(-2px)}
+.hero-scroll{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--muted);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px}
+.scroll-line{width:1px;height:46px;background:linear-gradient(to bottom,var(--accent),transparent);animation:sp 2s infinite}
+#stats{position:relative;z-index:1;padding:40px 48px;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);display:flex;justify-content:center;gap:64px;flex-wrap:wrap}
+.stat-item{text-align:center}
+.stat-num{font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--accent);line-height:1}
+.stat-label{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;margin-top:4px}
+section{position:relative;z-index:1}
+.section-header{text-align:center;margin-bottom:60px}
+.section-tag{font-family:'Space Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:3px;display:block;margin-bottom:12px}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,5vw,64px);letter-spacing:1px;line-height:1}
+.section-desc{color:var(--muted);max-width:500px;margin:14px auto 0;line-height:1.7;font-size:15px}
+#tabela{padding:100px 16px}
+.periodic-outer{overflow-x:auto;padding-bottom:16px}
+.periodic-grid{display:grid;grid-template-columns:repeat(18,minmax(52px,1fr));gap:3px;max-width:1100px;margin:0 auto;min-width:800px}
+.element{aspect-ratio:1;background:var(--card);border:1px solid var(--border);border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:none;transition:transform .15s,box-shadow .15s;position:relative;padding:3px 2px}
+.element:hover{transform:scale(1.18);z-index:10;box-shadow:0 0 18px currentColor;border-color:currentColor}
+.el-num{font-family:'Space Mono',monospace;font-size:7px;color:var(--muted)}
+.el-sym{font-family:'Bebas Neue',sans-serif;font-size:clamp(13px,1.4vw,20px);line-height:1.1}
+.el-name{font-size:6px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center}
+.el-mass{font-size:5px;color:var(--muted)}
+.cat-alkali{color:#ff6b6b}.cat-alkaline{color:#ffa94d}.cat-transition{color:#74c0fc}.cat-post{color:#69db7c}.cat-metalloid{color:#a9e34b}.cat-nonmetal{color:#ff8787}.cat-noble{color:#da77f2}.cat-lanthanide{color:#ffd43b}.cat-actinide{color:#f783ac}.cat-halogen{color:#63e6be}
+.periodic-legend{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:24px;max-width:900px;margin-left:auto;margin-right:auto}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.legend-dot{width:10px;height:10px;border-radius:2px;border:1px solid}
+#el-modal{position:fixed;inset:0;z-index:200;background:rgba(5,8,17,.92);backdrop-filter:blur(24px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
+#el-modal.open{opacity:1;pointer-events:all}
+.modal-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:44px;max-width:580px;width:90%;position:relative;transform:scale(.88);transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
+#el-modal.open .modal-card{transform:scale(1)}
+.modal-close{position:absolute;top:14px;right:18px;background:none;border:none;color:var(--muted);font-size:22px;cursor:none}
+.modal-top{display:flex;align-items:flex-end;gap:20px;margin-bottom:24px;flex-wrap:wrap}
+.modal-sym{font-family:'Bebas Neue',sans-serif;font-size:88px;line-height:1}
+.modal-name{font-size:22px;font-weight:500}
+.modal-num{font-family:'Space Mono',monospace;font-size:13px;color:var(--muted);margin-top:4px}
+.modal-cat{font-size:12px;margin-top:6px;padding:3px 10px;border-radius:999px;border:1px solid;display:inline-block;font-family:'Space Mono',monospace;letter-spacing:1px}
+.modal-props{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.modal-prop{background:rgba(255,255,255,.04);border-radius:6px;padding:12px 14px}
+.modal-prop label{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:4px}
+.modal-desc{color:var(--muted);font-size:14px;line-height:1.7;border-top:1px solid var(--border);padding-top:16px}
+#reacoes{padding:100px 24px}
+.reactions-wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.reaction-card{background:var(--card);border:1px solid var(--border);border-left:3px solid;border-radius:8px;padding:26px 28px;cursor:none;transition:transform .2s}
+.reaction-card:hover{transform:translateX(5px)}
+.reaction-type{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;margin-bottom:6px}
+.reaction-title{font-size:18px;font-weight:500;margin-bottom:10px;color:var(--text)}
+.reaction-eq{font-family:'Space Mono',monospace;font-size:13px;color:var(--accent);background:rgba(0,212,255,.06);padding:10px 16px;border-radius:6px;margin:12px 0;overflow-x:auto;white-space:nowrap}
+.reaction-desc{color:var(--muted);font-size:14px;line-height:1.65}
+.reaction-tag{display:inline-block;font-size:11px;padding:3px 10px;border-radius:999px;border:1px solid;font-family:'Space Mono',monospace;margin-top:12px;letter-spacing:1px}
+#simulador{padding:100px 24px}
+.sim-wrap{max-width:900px;margin:0 auto;background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.sim-tabs{display:flex;border-bottom:1px solid var(--border)}
+.sim-tab{flex:1;padding:16px;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:'Space Mono',monospace;font-size:12px;letter-spacing:1px;cursor:none;transition:color .2s,background .2s}
+.sim-tab.active{color:var(--accent);border-bottom-color:var(--accent);background:rgba(0,212,255,.04)}
+.sim-content{padding:36px}
+.sim-panel{display:none}
+.sim-panel.active{display:block}
+.ph-slider-wrap label{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:12px}
+#ph-slider{width:100%;-webkit-appearance:none;height:6px;border-radius:999px;background:linear-gradient(90deg,#ff3333,#ff8800,#ffff00,#44ff44,#0099ff,#8844ff);outline:none;cursor:none;margin-top:16px}
+#ph-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--text);border:2px solid var(--bg);cursor:none}
+.ph-display{text-align:center;margin-top:24px}
+.ph-num{font-family:'Bebas Neue',sans-serif;font-size:96px;line-height:1;transition:color .3s}
+.ph-label{font-size:18px;margin-top:4px;transition:color .3s}
+.ph-desc{margin-top:16px;font-size:14px;color:var(--muted);line-height:1.6;min-height:56px}
+.ph-examples{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+.ph-ex{padding:5px 12px;border-radius:999px;font-size:11px;border:1px solid;font-family:'Space Mono',monospace}
+.ph-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.eq-input{flex:1;min-width:140px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:12px 16px;color:var(--text);font-family:'Space Mono',monospace;font-size:14px;outline:none;transition:border-color .2s;cursor:none}
+.eq-input:focus{border-color:var(--accent)}
+.bal-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:20px}
+.eq-sep{color:var(--accent);font-size:20px;font-family:'Space Mono',monospace;flex-shrink:0}
+.btn-bal{padding:12px 24px;background:var(--accent);color:var(--bg);border:none;border-radius:6px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;cursor:none;flex-shrink:0}
+.bal-result{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;font-family:'Space Mono',monospace;font-size:15px;color:var(--accent);text-align:center;min-height:58px;display:flex;align-items:center;justify-content:center}
+.molar-result{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;margin-top:16px}
+.molar-result label{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:8px}
+.big{font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--accent);line-height:1}
+.breakdown-table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px}
+.breakdown-table th{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;text-align:left;padding:8px 12px;border-bottom:1px solid var(--border)}
+.breakdown-table td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.04)}
+#conceitos{padding:100px 24px}
+.concepts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;max-width:1100px;margin:0 auto}
+.concept-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:28px;cursor:none;transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden}
+.concept-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .3s}
+.concept-card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.concept-card:hover::after{transform:scaleX(1)}
+.concept-icon{font-size:32px;margin-bottom:16px;display:block}
+.concept-title{font-size:17px;font-weight:500;margin-bottom:10px;color:var(--text)}
+.concept-text{color:var(--muted);font-size:13px;line-height:1.65}
+.concept-more{display:inline-flex;align-items:center;gap:6px;margin-top:14px;font-family:'Space Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:1px}
+#estados{padding:100px 24px;background:linear-gradient(to bottom,transparent,rgba(11,17,32,.5),transparent)}
+.states-container{max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.state-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;text-align:center;cursor:none}
+.state-canvas{width:100%;height:130px;display:block;border-radius:8px;background:var(--surface);margin-bottom:16px}
+.state-name{font-family:'Bebas Neue',sans-serif;font-size:34px;margin-bottom:8px}
+.state-desc{color:var(--muted);font-size:13px;line-height:1.6}
+.state-props{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+.state-prop{display:flex;justify-content:space-between;font-size:12px;padding:7px 12px;background:rgba(255,255,255,.04);border-radius:6px}
+.state-prop span:first-child{color:var(--muted);font-family:'Space Mono',monospace;font-size:10px}
+.state-prop span:last-child{color:var(--accent)}
+#quiz{padding:100px 24px}
+.quiz-wrap{max-width:680px;margin:0 auto}
+.quiz-progress{display:flex;gap:6px;margin-bottom:36px}
+.quiz-pip{flex:1;height:3px;border-radius:999px;background:var(--surface)}
+.quiz-pip.done{background:var(--accent)}
+.quiz-pip.active{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.quiz-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:40px;animation:fsd .4s ease both}
+.quiz-q-num{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:12px}
+.quiz-question{font-size:20px;font-weight:500;line-height:1.5;margin-bottom:28px}
+.quiz-options{display:flex;flex-direction:column;gap:10px}
+.quiz-opt{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 20px;font-size:15px;cursor:none;transition:border-color .2s,background .2s,transform .15s;text-align:left;color:var(--text)}
+.quiz-opt:hover:not(:disabled){border-color:rgba(0,212,255,.4);background:rgba(0,212,255,.05);transform:translateX(4px)}
+.quiz-opt.correct{border-color:#7fff00!important;background:rgba(127,255,0,.08)!important;color:#7fff00!important}
+.quiz-opt.wrong{border-color:#ff6b35!important;background:rgba(255,107,53,.08)!important;color:#ff6b35!important}
+.quiz-feedback{margin-top:18px;padding:14px 18px;border-radius:8px;font-size:14px;line-height:1.6;display:none}
+.quiz-feedback.show{display:block}
+.quiz-feedback.ok{background:rgba(127,255,0,.08);border:1px solid rgba(127,255,0,.3);color:#7fff00}
+.quiz-feedback.fail{background:rgba(255,107,53,.08);border:1px solid rgba(255,107,53,.3);color:#ff6b35}
+.quiz-next{margin-top:16px;padding:12px 28px;background:var(--accent);color:var(--bg);border:none;border-radius:6px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;cursor:none;display:none}
+.quiz-next.show{display:inline-block}
+.quiz-result{text-align:center;padding:20px 0}
+.quiz-score{font-family:'Bebas Neue',sans-serif;font-size:96px;color:var(--accent);line-height:1}
+.quiz-restart{margin-top:24px;padding:13px 32px;background:transparent;color:var(--accent);border:1px solid rgba(0,212,255,.4);border-radius:6px;font-family:'Space Mono',monospace;font-size:12px;cursor:none}
+#glossario{padding:100px 24px}
+.gloss-wrap{max-width:860px;margin:0 auto}
+.gloss-search{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px 20px;color:var(--text);font-family:'Space Mono',monospace;font-size:14px;outline:none;transition:border-color .2s;margin-bottom:28px;cursor:none}
+.gloss-search:focus{border-color:var(--accent)}
+.gloss-search::placeholder{color:var(--muted)}
+.gloss-list{display:flex;flex-direction:column;gap:10px}
+.gloss-item{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:20px 24px;cursor:none;transition:border-color .2s}
+.gloss-item:hover{border-color:rgba(0,212,255,.25)}
+.gloss-term{font-size:15px;font-weight:500;color:var(--accent);margin-bottom:6px;font-family:'Space Mono',monospace}
+.gloss-def{color:var(--muted);font-size:14px;line-height:1.6}
+.gloss-tags{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.gloss-tag{font-size:10px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);color:var(--muted);font-family:'Space Mono',monospace}
+footer{position:relative;z-index:1;padding:60px 48px 40px;border-top:1px solid var(--border);background:var(--surface)}
+.footer-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px}
+.footer-brand .logo{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--accent);letter-spacing:3px;margin-bottom:12px}
+.footer-brand .logo span{color:var(--accent2)}
+.footer-brand p{color:var(--muted);font-size:13px;line-height:1.7}
+.footer-col h4{font-family:'Space Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:2px;margin-bottom:16px}
+.footer-col a{display:block;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:8px;transition:color .2s}
+.footer-col a:hover{color:var(--text)}
+.footer-bottom{max-width:1100px;margin:40px auto 0;padding-top:24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.footer-bottom p{color:var(--muted);font-size:12px;font-family:'Space Mono',monospace}
+@keyframes fsd{from{opacity:0;transform:translateY(-18px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+@keyframes gradShift{0%,100%{background-position:0%}50%{background-position:100%}}
+@keyframes sp{0%,100%{opacity:1;transform:scaleY(1)}50%{opacity:.4;transform:scaleY(.5)}}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s,transform .6s}
+.reveal.visible{opacity:1;transform:none}
+@media(max-width:768px){nav{padding:14px 20px}.nav-links{gap:14px}.states-container{grid-template-columns:1fr}.footer-inner{grid-template-columns:1fr 1fr;gap:24px}.modal-props{grid-template-columns:1fr}}
+@media(max-width:500px){.footer-inner{grid-template-columns:1fr}.bal-row{flex-direction:column}}
+</style>
+</head>
+<body>
+<div id="cur-dot"></div>
+<div id="cur-ring"></div>
+<canvas id="bg-canvas"></canvas>
+
+<nav>
+  <div class="nav-logo">QUIMICA<span>.LAB</span></div>
+  <div class="nav-links">
+    <a href="#tabela">Tabela</a>
+    <a href="#reacoes">Reações</a>
+    <a href="#simulador">Simulador</a>
+    <a href="#conceitos">Conceitos</a>
+    <a href="#estados">Estados</a>
+    <a href="#quiz">Quiz</a>
+    <a href="#glossario">Glossário</a>
+  </div>
+</nav>
+
+<section id="hero">
+  <div class="hero-badge"><div class="dot"></div>PLATAFORMA INTERATIVA DE QUÍMICA</div>
+  <h1 class="hero-title"><span class="l1">EXPLORE A</span><span class="l2">QUÍMICA</span></h1>
+  <p class="hero-sub">Do átomo às moléculas complexas. Tabela periódica interativa, simuladores de reações, calculadoras e <em>muito mais</em>.</p>
+  <div class="hero-btns">
+    <button class="btn-p" onclick="document.getElementById('tabela').scrollIntoView({behavior:'smooth'})">Explorar Tabela</button>
+    <button class="btn-s" onclick="document.getElementById('simulador').scrollIntoView({behavior:'smooth'})">Abrir Simulador</button>
+  </div>
+  <div class="hero-scroll"><div class="scroll-line"></div>SCROLL</div>
+</section>
+
+<div id="stats">
+  <div class="stat-item"><div class="stat-num" data-target="118">0</div><div class="stat-label">ELEMENTOS</div></div>
+  <div class="stat-item"><div class="stat-num" data-target="7">0</div><div class="stat-label">PERÍODOS</div></div>
+  <div class="stat-item"><div class="stat-num" data-target="18">0</div><div class="stat-label">GRUPOS</div></div>
+  <div class="stat-item"><div class="stat-num" data-target="92">0</div><div class="stat-label">NATURAIS</div></div>
+  <div class="stat-item"><div class="stat-num" data-target="26">0</div><div class="stat-label">SINTÉTICOS</div></div>
+</div>
+
+<section id="tabela" class="reveal">
+  <div class="section-header">
+    <span class="section-tag">// TABELA PERIÓDICA</span>
+    <h2 class="section-title">118 ELEMENTOS</h2>
+    <p class="section-desc">Clique em qualquer elemento para ver propriedades detalhadas, configuração eletrônica e curiosidades.</p>
+  </div>
+  <div class="periodic-outer"><div class="periodic-grid" id="periodic-grid"></div></div>
+  <div class="periodic-legend">
+    <div class="legend-item cat-alkali"><div class="legend-dot" style="border-color:#ff6b6b;background:rgba(255,107,107,.15)"></div>Metais alcalinos</div>
+    <div class="legend-item cat-alkaline"><div class="legend-dot" style="border-color:#ffa94d;background:rgba(255,169,77,.15)"></div>Alcalino terrosos</div>
+    <div class="legend-item cat-transition"><div class="legend-dot" style="border-color:#74c0fc;background:rgba(116,192,252,.15)"></div>Transição</div>
+    <div class="legend-item cat-post"><div class="legend-dot" style="border-color:#69db7c;background:rgba(105,219,124,.15)"></div>Pós-transição</div>
+    <div class="legend-item cat-metalloid"><div class="legend-dot" style="border-color:#a9e34b;background:rgba(169,227,75,.15)"></div>Semimetais</div>
+    <div class="legend-item cat-nonmetal"><div class="legend-dot" style="border-color:#ff8787;background:rgba(255,135,135,.15)"></div>Não-metais</div>
+    <div class="legend-item cat-halogen"><div class="legend-dot" style="border-color:#63e6be;background:rgba(99,230,190,.15)"></div>Halogênios</div>
+    <div class="legend-item cat-noble"><div class="legend-dot" style="border-color:#da77f2;background:rgba(218,119,242,.15)"></div>Gases nobres</div>
+    <div class="legend-item cat-lanthanide"><div class="legend-dot" style="border-color:#ffd43b;background:rgba(255,212,59,.15)"></div>Lantanídeos</div>
+    <div class="legend-item cat-actinide"><div class="legend-dot" style="border-color:#f783ac;background:rgba(247,131,172,.15)"></div>Actinídeos</div>
+  </div>
+</section>
+
+<div id="el-modal">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-top">
+      <div class="modal-sym" id="m-sym"></div>
+      <div>
+        <div class="modal-name" id="m-name"></div>
+        <div class="modal-num" id="m-num"></div>
+        <div class="modal-cat" id="m-cat"></div>
+      </div>
+    </div>
+    <div class="modal-props">
+      <div class="modal-prop"><label>PERÍODO</label><span id="m-period"></span></div>
+      <div class="modal-prop"><label>GRUPO</label><span id="m-group"></span></div>
+      <div class="modal-prop"><label>PONTO DE FUSÃO</label><span id="m-melt"></span></div>
+      <div class="modal-prop"><label>PONTO DE EBULIÇÃO</label><span id="m-boil"></span></div>
+      <div class="modal-prop"><label>DENSIDADE</label><span id="m-density"></span></div>
+      <div class="modal-prop"><label>CONFIG. ELETRÔNICA</label><span id="m-config" style="font-family:'Space Mono',monospace;font-size:12px"></span></div>
+    </div>
+    <div class="modal-desc" id="m-desc"></div>
+  </div>
+</div>
+
+<section id="reacoes" class="reveal">
+  <div class="section-header">
+    <span class="section-tag">// TIPOS DE REAÇÕES</span>
+    <h2 class="section-title">REAÇÕES QUÍMICAS</h2>
+    <p class="section-desc">Síntese, decomposição, dupla troca, combustão e muito mais — com equações balanceadas.</p>
+  </div>
+  <div class="reactions-wrap" id="reactions-wrap"></div>
+</section>
+
+<section id="simulador" class="reveal">
+  <div class="section-header">
+    <span class="section-tag">// FERRAMENTAS</span>
+    <h2 class="section-title">SIMULADOR</h2>
+    <p class="section-desc">Calcule pH, massa molar e experimente com reações químicas interativamente.</p>
+  </div>
+  <div class="sim-wrap">
+    <div class="sim-tabs">
+      <button class="sim-tab active" onclick="showTab('ph')">pH / pOH</button>
+      <button class="sim-tab" onclick="showTab('molar')">Massa Molar</button>
+      <button class="sim-tab" onclick="showTab('bal')">Balanceador</button>
+    </div>
+    <div class="sim-content">
+      <div class="sim-panel active" id="tab-ph">
+        <div class="ph-slider-wrap">
+          <label>AJUSTE O pH DA SOLUÇÃO</label>
+          <input type="range" id="ph-slider" min="0" max="14" step="0.1" value="7">
+        </div>
+        <div class="ph-display">
+          <div class="ph-num" id="ph-num">7.0</div>
+          <div class="ph-label" id="ph-label" style="color:var(--muted)">NEUTRO</div>
+          <div class="ph-desc" id="ph-desc"></div>
+          <div class="ph-examples" id="ph-examples"></div>
+        </div>
+        <div class="ph-grid">
+          <div class="modal-prop"><label>[H⁺] mol/L</label><span id="h-conc"></span></div>
+          <div class="modal-prop"><label>[OH⁻] mol/L</label><span id="oh-conc"></span></div>
+          <div class="modal-prop"><label>pOH</label><span id="poh-val"></span></div>
+          <div class="modal-prop"><label>TIPO</label><span id="ph-type"></span></div>
+        </div>
+      </div>
+      <div class="sim-panel" id="tab-molar">
+        <p style="color:var(--muted);font-size:13px;margin-bottom:16px;font-family:'Space Mono',monospace">Digite a fórmula química (ex: H2O, NaCl, C6H12O6, H2SO4)</p>
+        <input class="eq-input" style="width:100%" id="molar-input" placeholder="H2O" value="H2O" oninput="calcMolar()">
+        <div class="molar-result">
+          <label>MASSA MOLAR</label>
+          <div><span class="big" id="molar-val">18.015</span><span style="font-size:16px;color:var(--muted);margin-left:4px">g/mol</span></div>
+        </div>
+        <table class="breakdown-table">
+          <thead><tr><th>ELEMENTO</th><th>QTD</th><th>MASSA ATÔMICA</th><th>SUBTOTAL</th></tr></thead>
+          <tbody id="molar-tbody"></tbody>
+        </table>
+      </div>
+      <div class="sim-panel" id="tab-bal">
+        <p style="color:var(--muted);font-size:13px;margin-bottom:16px;font-family:'Space Mono',monospace">Selecione um exemplo ou insira reagentes e produtos:</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px" id="bal-presets"></div>
+        <div class="bal-row">
+          <input class="eq-input" id="bal-reactants" placeholder="H2 + O2" value="H2 + O2">
+          <div class="eq-sep">→</div>
+          <input class="eq-input" id="bal-products" placeholder="H2O" value="H2O">
+          <button class="btn-bal" onclick="balanceEq()">BALANCEAR</button>
+        </div>
+        <div class="bal-result" id="bal-result">Pressione BALANCEAR para ver o resultado</div>
+        <div id="bal-exp" style="margin-top:12px;color:var(--muted);font-size:13px;line-height:1.7"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="conceitos" class="reveal">
+  <div class="section-header">
+    <span class="section-tag">// TEORIA</span>
+    <h2 class="section-title">CONCEITOS FUNDAMENTAIS</h2>
+    <p class="section-desc">Os pilares da química moderna explicados de forma clara e objetiva.</p>
+  </div>
+  <div class="concepts-grid" id="concepts-grid"></div>
+</section>
+
+<section id="estados" class="reveal">
+  <div class="section-header">
+    <span class="section-tag">// FÍSICA QUÍMICA</span>
+    <h2 class="section-title">ESTADOS DA MATÉRIA</h2>
+    <p class="section-desc">Visualize como as partículas se comportam nos diferentes estados físicos.</p>
+  </div>
+  <div class="states-container">
+    <div class="state-card">
+      <canvas class="state-canvas" id="solid-canvas"></canvas>
+      <div class="state-name" style="color:#74c0fc">SÓLIDO</div>
+      <div class="state-desc">Partículas com posição fixa que vibram em torno de pontos de equilíbrio.</div>
+      <div class="state-props">
+        <div class="state-prop"><span>Forma</span><span>Definida</span></div>
+        <div class="state-prop"><span>Volume</span><span>Definido</span></div>
+        <div class="state-prop"><span>Energia cinética</span><span>Baixa</span></div>
+      </div>
+    </div>
+    <div class="state-card">
+      <canvas class="state-canvas" id="liquid-canvas"></canvas>
+      <div class="state-name" style="color:#00d4ff">LÍQUIDO</div>
+      <div class="state-desc">Partículas com movimento relativo mas próximas. Volume definido, forma variável.</div>
+      <div class="state-props">
+        <div class="state-prop"><span>Forma</span><span>Variável</span></div>
+        <div class="state-prop"><span>Volume</span><span>Definido</span></div>
+        <div class="state-prop"><span>Energia cinética</span><span>Média</span></div>
+      </div>
+    </div>
+    <div class="state-card">
+      <canvas class="state-canvas" id="gas-canvas"></canvas>
+      <div class="state-name" style="color:#a9e34b">GÁS</div>
+      <div class="state-desc">Partículas muito afastadas em movimento aleatório rápido. Forma e volume variáveis.</div>
+      <div class="state-props">
+        <div class="state-prop"><span>Forma</span><span>Variável</span></div>
+        <div class="state-prop"><span>Volume</span><span>Variável</span></div>
+        <div class="state-prop"><span>Energia cinética</span><span>Alta</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="quiz" class="reveal">
+  <div class="section-header">
+    <span class="section-tag">// TESTE SEUS CONHECIMENTOS</span>
+    <h2 class="section-title">QUIZ DE QUÍMICA</h2>
+    <p class="section-desc">10 perguntas sobre química geral e inorgânica.</p>
+  </div>
+  <div class="quiz-wrap">
+    <div class="quiz-progress" id="quiz-progress"></div>
+    <div id="quiz-area"></div>
+  </div>
+</section>
+
+<section id="glossario" class="reveal">
+  <div class="section-header">
+    <span class="section-tag">// REFERÊNCIA</span>
+    <h2 class="section-title">GLOSSÁRIO</h2>
+    <p class="section-desc">Termos fundamentais da química com definições precisas e pesquisa em tempo real.</p>
+  </div>
+  <div class="gloss-wrap">
+    <input class="gloss-search" type="text" placeholder="Buscar termo..." id="gloss-search" oninput="filterGloss()">
+    <div class="gloss-list" id="gloss-list"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="logo">QUIMICA<span>.LAB</span></div>
+      <p>Plataforma educacional interativa de química. Desenvolvida para estudantes e apaixonados pela ciência molecular.</p>
+    </div>
+    <div class="footer-col">
+      <h4>EXPLORAR</h4>
+      <a href="#tabela">Tabela Periódica</a>
+      <a href="#reacoes">Reações</a>
+      <a href="#simulador">Simulador</a>
+      <a href="#conceitos">Conceitos</a>
+    </div>
+    <div class="footer-col">
+      <h4>FERRAMENTAS</h4>
+      <a href="#simulador">Calculadora pH</a>
+      <a href="#simulador">Massa Molar</a>
+      <a href="#simulador">Balanceador</a>
+      <a href="#quiz">Quiz</a>
+    </div>
+    <div class="footer-col">
+      <h4>REFERÊNCIA</h4>
+      <a href="#glossario">Glossário</a>
+      <a href="#estados">Estados da Matéria</a>
+      <a href="#conceitos">Teoria Atômica</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 QUIMICA.LAB — Todos os direitos reservados</p>
+    <p>Feito com ⚗️ e muita ciência</p>
+  </div>
+</footer>
+
+<script>
+// CURSOR
+const dot=document.getElementById('cur-dot'),ring=document.getElementById('cur-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=mx+'px';dot.style.top=my+'px'});
+(function ar(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(ar)})();
+document.querySelectorAll('a,button,input,.element,.concept-card,.state-card,.gloss-item').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{ring.style.width='52px';ring.style.height='52px';ring.style.borderColor='rgba(255,107,53,.6)';dot.style.background='#ff6b35'});
+  el.addEventListener('mouseleave',()=>{ring.style.width='36px';ring.style.height='36px';ring.style.borderColor='rgba(0,212,255,.45)';dot.style.background='#00d4ff'});
+});
+
+// BACKGROUND
+const bgC=document.getElementById('bg-canvas'),bgX=bgC.getContext('2d');
+function rBg(){bgC.width=window.innerWidth;bgC.height=window.innerHeight}
+rBg();window.addEventListener('resize',rBg);
+const pts=Array.from({length:65},()=>({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,vx:(Math.random()-.5)*.28,vy:(Math.random()-.5)*.28,r:Math.random()*1.4+.4}));
+(function bg(){bgX.clearRect(0,0,bgC.width,bgC.height);pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>bgC.width)p.vx*=-1;if(p.y<0||p.y>bgC.height)p.vy*=-1;bgX.beginPath();bgX.arc(p.x,p.y,p.r,0,6.28);bgX.fillStyle='rgba(0,212,255,.28)';bgX.fill()});for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const d=Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y);if(d<115){bgX.beginPath();bgX.moveTo(pts[i].x,pts[i].y);bgX.lineTo(pts[j].x,pts[j].y);bgX.strokeStyle=`rgba(0,212,255,${.09*(1-d/115)})`;bgX.lineWidth=.5;bgX.stroke()}}requestAnimationFrame(bg)})();
+
+// REVEAL
+const obs=new IntersectionObserver(e=>e.forEach(en=>{if(en.isIntersecting)en.target.classList.add('visible')}),{threshold:.07});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// STATS COUNT UP
+const sObs=new IntersectionObserver(e=>e.forEach(en=>{if(!en.isIntersecting)return;en.target.querySelectorAll('[data-target]').forEach(el=>{const t=+el.dataset.target;let v=0;(function s(){v=Math.min(v+Math.ceil(t/38),t);el.textContent=v;if(v<t)requestAnimationFrame(s)})()});sObs.unobserve(en.target)}),{threshold:.5});
+sObs.observe(document.getElementById('stats'));
+
+// ELEMENTS
+const ELEMENTS=[
+  {n:1,sym:'H',name:'Hidrogênio',mass:1.008,cat:'nonmetal',col:1,row:1,period:1,group:1,melt:'-259.1°C',boil:'-252.9°C',density:'0.000090 g/cm³',config:'1s¹',desc:'O elemento mais abundante do universo. Constituinte da água e combustível de estrelas através da fusão nuclear. Combustível limpo do futuro.'},
+  {n:2,sym:'He',name:'Hélio',mass:4.003,cat:'noble',col:18,row:1,period:1,group:18,melt:'-272.2°C',boil:'-268.9°C',density:'0.000179 g/cm³',config:'1s²',desc:'Segundo elemento mais abundante do universo. Gás nobre inerte, usado em balões e mergulho profundo. Ponto de ebulição mais baixo de todos os elementos.'},
+  {n:3,sym:'Li',name:'Lítio',mass:6.941,cat:'alkali',col:1,row:2,period:2,group:1,melt:'180.5°C',boil:'1342°C',density:'0.534 g/cm³',config:'[He] 2s¹',desc:'Metal alcalino mais leve. Essencial em baterias de íon-lítio de celulares e carros elétricos. Também usado no tratamento de transtorno bipolar.'},
+  {n:4,sym:'Be',name:'Berílio',mass:9.012,cat:'alkaline',col:2,row:2,period:2,group:2,melt:'1287°C',boil:'2469°C',density:'1.85 g/cm³',config:'[He] 2s²',desc:'Metal leve e rígido. Altamente tóxico se inalado. Usado em ligas aeroespaciais e janelas transparentes para raios-X.'},
+  {n:5,sym:'B',name:'Boro',mass:10.811,cat:'metalloid',col:13,row:2,period:2,group:13,melt:'2076°C',boil:'3927°C',density:'2.34 g/cm³',config:'[He] 2s² 2p¹',desc:'Semimetal essencial em semicondutores e no vidro borossilicato (Pyrex). Importante para plantas. Bórax (Na₂B₄O₇) usado em detergentes.'},
+  {n:6,sym:'C',name:'Carbono',mass:12.011,cat:'nonmetal',col:14,row:2,period:2,group:14,melt:'3550°C',boil:'4827°C',density:'2.267 g/cm³',config:'[He] 2s² 2p²',desc:'Base de toda a química orgânica. Existe como grafite, diamante e fulerenos (C60). Forma mais de 10 milhões de compostos conhecidos.'},
+  {n:7,sym:'N',name:'Nitrogênio',mass:14.007,cat:'nonmetal',col:15,row:2,period:2,group:15,melt:'-210°C',boil:'-195.8°C',density:'0.00125 g/cm³',config:'[He] 2s² 2p³',desc:'Compõe 78% da atmosfera. Essencial em proteínas, DNA e fertilizantes. Líquido criogênico amplamente usado em preservação biológica.'},
+  {n:8,sym:'O',name:'Oxigênio',mass:15.999,cat:'nonmetal',col:16,row:2,period:2,group:16,melt:'-218.8°C',boil:'-183°C',density:'0.00143 g/cm³',config:'[He] 2s² 2p⁴',desc:'Sustenta a vida aeróbica. Forma ozônio (O₃) na estratosfera protegendo de UV. Terceiro elemento mais abundante do universo.'},
+  {n:9,sym:'F',name:'Flúor',mass:18.998,cat:'halogen',col:17,row:2,period:2,group:17,melt:'-219.7°C',boil:'-188.1°C',density:'0.00170 g/cm³',config:'[He] 2s² 2p⁵',desc:'Elemento mais eletronegativo e reativo da tabela. Forma as ligações C-F mais fortes da química. Usado em pasta de dente e teflon (PTFE).'},
+  {n:10,sym:'Ne',name:'Neônio',mass:20.180,cat:'noble',col:18,row:2,period:2,group:18,melt:'-248.6°C',boil:'-246.1°C',density:'0.000900 g/cm³',config:'[He] 2s² 2p⁶',desc:'Gás nobre que emite luz vermelha-laranja. Letreiros luminosos "neon" tornaram o nome genérico para todos os tipos de placas luminosas.'},
+  {n:11,sym:'Na',name:'Sódio',mass:22.990,cat:'alkali',col:1,row:3,period:3,group:1,melt:'97.8°C',boil:'883°C',density:'0.968 g/cm³',config:'[Ne] 3s¹',desc:'Metal macio que reage violentamente com água gerando H₂. Componente do sal de cozinha (NaCl). Vital para impulsos nervosos.'},
+  {n:12,sym:'Mg',name:'Magnésio',mass:24.305,cat:'alkaline',col:2,row:3,period:3,group:2,melt:'650°C',boil:'1090°C',density:'1.738 g/cm³',config:'[Ne] 3s²',desc:'Metal leve no centro da clorofila. Essencial para o metabolismo humano — cofator de mais de 300 enzimas.'},
+  {n:13,sym:'Al',name:'Alumínio',mass:26.982,cat:'post',col:13,row:3,period:3,group:13,melt:'660.3°C',boil:'2519°C',density:'2.698 g/cm³',config:'[Ne] 3s² 3p¹',desc:'Metal mais abundante na crosta (8%). Resistente à corrosão por camada de Al₂O₃. Reciclagem usa só 5% da energia de produção primária.'},
+  {n:14,sym:'Si',name:'Silício',mass:28.086,cat:'metalloid',col:14,row:3,period:3,group:14,melt:'1414°C',boil:'3265°C',density:'2.329 g/cm³',config:'[Ne] 3s² 3p²',desc:'Base dos semicondutores e da era digital. Gap de banda 1.1eV ideal para transistores. Segundo elemento mais abundante na crosta.'},
+  {n:15,sym:'P',name:'Fósforo',mass:30.974,cat:'nonmetal',col:15,row:3,period:3,group:15,melt:'44.2°C',boil:'280.5°C',density:'1.82 g/cm³',config:'[Ne] 3s² 3p³',desc:'Essencial em DNA, RNA e ATP. Componente de fertilizantes e fósforos. Alótropos: branco (inflamável) e vermelho (estável).'},
+  {n:16,sym:'S',name:'Enxofre',mass:32.065,cat:'nonmetal',col:16,row:3,period:3,group:16,melt:'115.2°C',boil:'444.7°C',density:'2.067 g/cm³',config:'[Ne] 3s² 3p⁴',desc:'Sólido amarelo. Matéria-prima do ácido sulfúrico (H₂SO₄), produto químico industrial mais produzido. Vulcanização da borracha.'},
+  {n:17,sym:'Cl',name:'Cloro',mass:35.453,cat:'halogen',col:17,row:3,period:3,group:17,melt:'-101°C',boil:'-34.1°C',density:'0.00321 g/cm³',config:'[Ne] 3s² 3p⁵',desc:'Gás amarelo-esverdeado tóxico. Purificação de água, síntese de PVC e desinfetantes. Usado como arma química na 1ª Guerra Mundial.'},
+  {n:18,sym:'Ar',name:'Argônio',mass:39.948,cat:'noble',col:18,row:3,period:3,group:18,melt:'-189.4°C',boil:'-185.9°C',density:'0.001784 g/cm³',config:'[Ne] 3s² 3p⁶',desc:'Gás nobre mais abundante na atmosfera (0.93%). Protege filamentos de lâmpadas incandescentes e é usado em soldagem MIG/TIG.'},
+  {n:19,sym:'K',name:'Potássio',mass:39.098,cat:'alkali',col:1,row:4,period:4,group:1,melt:'63.5°C',boil:'759°C',density:'0.862 g/cm³',config:'[Ar] 4s¹',desc:'Metal alcalino vital para função celular e potencial de ação nervoso. KNO₃ é componente da pólvora negra.'},
+  {n:20,sym:'Ca',name:'Cálcio',mass:40.078,cat:'alkaline',col:2,row:4,period:4,group:2,melt:'842°C',boil:'1484°C',density:'1.55 g/cm³',config:'[Ar] 4s²',desc:'Mineral mais abundante no corpo humano (~1 kg). Essencial para ossos (hidroxiapatita), dentes e coagulação sanguínea.'},
+  {n:21,sym:'Sc',name:'Escândio',mass:44.956,cat:'transition',col:3,row:4,period:4,group:3,melt:'1541°C',boil:'2836°C',density:'2.985 g/cm³',config:'[Ar] 3d¹ 4s²',desc:'Metal de transição raro. Usado em ligas de alumínio de alta performance para aeronaves e artigos esportivos.'},
+  {n:22,sym:'Ti',name:'Titânio',mass:47.867,cat:'transition',col:4,row:4,period:4,group:4,melt:'1668°C',boil:'3287°C',density:'4.506 g/cm³',config:'[Ar] 3d² 4s²',desc:'Metal leve, resistente e biocompatível. Implantes médicos, aviação e pigmento branco TiO₂ (o mais usado no mundo).'},
+  {n:23,sym:'V',name:'Vanádio',mass:50.942,cat:'transition',col:5,row:4,period:4,group:5,melt:'1910°C',boil:'3407°C',density:'6.0 g/cm³',config:'[Ar] 3d³ 4s²',desc:'Usado para fortalecer o aço. Compostos de vanádio exibem cores vibrantes nos diferentes estados de oxidação (+2 a +5).'},
+  {n:24,sym:'Cr',name:'Cromo',mass:51.996,cat:'transition',col:6,row:4,period:4,group:6,melt:'1907°C',boil:'2671°C',density:'7.15 g/cm³',config:'[Ar] 3d⁵ 4s¹',desc:'Metal brilhante em cromagem e aço inoxidável. Responsável pela cor vermelha de rubis (Cr³⁺) e verde de esmeraldas.'},
+  {n:25,sym:'Mn',name:'Manganês',mass:54.938,cat:'transition',col:7,row:4,period:4,group:7,melt:'1246°C',boil:'2061°C',density:'7.21 g/cm³',config:'[Ar] 3d⁵ 4s²',desc:'Essencial em fotossíntese e produção de aço. Presente em baterias alcalinas como MnO₂.'},
+  {n:26,sym:'Fe',name:'Ferro',mass:55.845,cat:'transition',col:8,row:4,period:4,group:8,melt:'1538°C',boil:'2861°C',density:'7.874 g/cm³',config:'[Ar] 3d⁶ 4s²',desc:'Metal mais usado pela humanidade. Base do aço (Fe+C). Transporta oxigênio no sangue via hemoglobina. Núcleo da Terra é majoritariamente ferro.'},
+  {n:27,sym:'Co',name:'Cobalto',mass:58.933,cat:'transition',col:9,row:4,period:4,group:9,melt:'1495°C',boil:'2927°C',density:'8.9 g/cm³',config:'[Ar] 3d⁷ 4s²',desc:'Componente da vitamina B12. Usado em baterias de lítio, ligas resistentes ao calor e pigmento azul histórico.'},
+  {n:28,sym:'Ni',name:'Níquel',mass:58.693,cat:'transition',col:10,row:4,period:4,group:10,melt:'1455°C',boil:'2913°C',density:'8.908 g/cm³',config:'[Ar] 3d⁸ 4s²',desc:'Metal resistente à corrosão. Usado em moedas, aço inoxidável, baterias recarregáveis e catálise (hidrogenação de óleos).'},
+  {n:29,sym:'Cu',name:'Cobre',mass:63.546,cat:'transition',col:11,row:4,period:4,group:11,melt:'1084.6°C',boil:'2562°C',density:'8.96 g/cm³',config:'[Ar] 3d¹⁰ 4s¹',desc:'Excelente condutor elétrico. Um dos primeiros metais usados na história. Era do Bronze: liga Cu+Sn. Propriedades antimicrobianas naturais.'},
+  {n:30,sym:'Zn',name:'Zinco',mass:65.38,cat:'transition',col:12,row:4,period:4,group:12,melt:'419.5°C',boil:'907°C',density:'7.133 g/cm³',config:'[Ar] 3d¹⁰ 4s²',desc:'Galvaniza o aço contra ferrugem por proteção catódica. Mineral essencial para sistema imunológico e cicatrização de feridas.'},
+  {n:31,sym:'Ga',name:'Gálio',mass:69.723,cat:'post',col:13,row:4,period:4,group:13,melt:'29.8°C',boil:'2229°C',density:'5.91 g/cm³',config:'[Ar] 3d¹⁰ 4s² 4p¹',desc:'Metal que derrete na palma da mão (ponto de fusão 29.8°C). Usado em LEDs, semicondutores GaAs e painéis solares.'},
+  {n:32,sym:'Ge',name:'Germânio',mass:72.630,cat:'metalloid',col:14,row:4,period:4,group:14,melt:'938.3°C',boil:'2820°C',density:'5.323 g/cm³',config:'[Ar] 3d¹⁰ 4s² 4p²',desc:'Semimetal previsto por Mendeleev como "eka-silício". Usado em fibras ópticas e nos primeiros transistores da história.'},
+  {n:35,sym:'Br',name:'Bromo',mass:79.904,cat:'halogen',col:17,row:4,period:4,group:17,melt:'-7.3°C',boil:'58.8°C',density:'3.1 g/cm³',config:'[Ar] 3d¹⁰ 4s² 4p⁵',desc:'Único elemento não-metal líquido em temperatura ambiente. Usado em retardantes de chama e pesticidas. Vapor de cor marrom-avermelhada, tóxico.'},
+  {n:36,sym:'Kr',name:'Criptônio',mass:83.798,cat:'noble',col:18,row:4,period:4,group:18,melt:'-157.4°C',boil:'-153.4°C',density:'0.00374 g/cm³',config:'[Ar] 3d¹⁰ 4s² 4p⁶',desc:'Gás nobre. Usado em lâmpadas de flash fotográfico e lasers de KrF (excímero) para litografia em chips.'},
+  {n:47,sym:'Ag',name:'Prata',mass:107.868,cat:'transition',col:11,row:5,period:5,group:11,melt:'961.8°C',boil:'2162°C',density:'10.49 g/cm³',config:'[Kr] 4d¹⁰ 5s¹',desc:'Melhor condutor elétrico e térmico dos metais. Propriedades antimicrobianas. AgBr é fotossensível — base da fotografia analógica.'},
+  {n:79,sym:'Au',name:'Ouro',mass:196.967,cat:'transition',col:11,row:6,period:6,group:11,melt:'1064.2°C',boil:'2856°C',density:'19.30 g/cm³',config:'[Xe] 4f¹⁴ 5d¹⁰ 6s¹',desc:'Metal nobre praticamente inerte quimicamente. Cor dourada por efeitos relativísticos nos elétrons. Padrão monetário histórico por milênios.'},
+  {n:80,sym:'Hg',name:'Mercúrio',mass:200.592,cat:'transition',col:12,row:6,period:6,group:12,melt:'-38.8°C',boil:'356.7°C',density:'13.534 g/cm³',config:'[Xe] 4f¹⁴ 5d¹⁰ 6s²',desc:'Único metal líquido em temperatura ambiente. Altamente tóxico. Usado em termômetros, barômetros e lâmpadas fluorescentes.'},
+  {n:82,sym:'Pb',name:'Chumbo',mass:207.2,cat:'post',col:14,row:6,period:6,group:14,melt:'327.5°C',boil:'1749°C',density:'11.34 g/cm³',config:'[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p²',desc:'Metal pesado e macio. Usado em baterias de chumbo-ácido (carros) e proteção contra radiação. Tóxico ao sistema nervoso.'},
+  {n:92,sym:'U',name:'Urânio',mass:238.029,cat:'actinide',col:6,row:9,period:7,group:3,melt:'1135°C',boil:'4131°C',density:'19.05 g/cm³',config:'[Rn] 5f³ 6d¹ 7s²',desc:'Combustível nuclear. ²³⁵U (0.72% natural) é fissionável — base de reatores e armas nucleares. Metal denso, mais pesado que chumbo.'},
+];
+
+function buildTable(){
+  const grid=document.getElementById('periodic-grid');
+  const map={};ELEMENTS.forEach(e=>map[e.col+'_'+e.row]=e);
+  for(let r=1;r<=9;r++)for(let c=1;c<=18;c++){
+    const e=map[c+'_'+r];const d=document.createElement('div');
+    if(!e||(r<=3&&c>=3&&c<=12)){d.className='element';d.style.cssText='visibility:hidden;pointer-events:none';if(r>=8)d.style.display='none';}
+    else{d.className='element cat-'+e.cat;d.innerHTML=`<div class="el-num">${e.n}</div><div class="el-sym">${e.sym}</div><div class="el-name">${e.name}</div><div class="el-mass">${e.mass.toFixed(e.mass<10?3:e.mass<100?2:1)}</div>`;d.addEventListener('click',()=>openEl(e));}
+    grid.appendChild(d);
+  }
+}
+buildTable();
+
+const CATNAMES={alkali:'Metal Alcalino',alkaline:'Alcalino Terroso',transition:'Metal de Transição',post:'Metal Pós-Transição',metalloid:'Semimetal',nonmetal:'Não-Metal',halogen:'Halogênio',noble:'Gás Nobre',lanthanide:'Lantanídeo',actinide:'Actinídeo'};
+
+function openEl(e){
+  const color=getComputedStyle(document.querySelector('.cat-'+e.cat)).color;
+  document.getElementById('m-sym').textContent=e.sym;
+  document.getElementById('m-sym').style.color=color;
+  document.getElementById('m-name').textContent=e.name;
+  document.getElementById('m-num').textContent='Nº '+e.n+' · Massa: '+e.mass+' u';
+  const cat=document.getElementById('m-cat');
+  cat.textContent=CATNAMES[e.cat]||e.cat;cat.style.color=color;cat.style.borderColor=color;
+  ['period','group','melt','boil','density'].forEach(k=>document.getElementById('m-'+k).textContent=e[k]);
+  document.getElementById('m-config').textContent=e.config;
+  document.getElementById('m-desc').textContent=e.desc;
+  document.getElementById('el-modal').classList.add('open');
+}
+function closeModal(){document.getElementById('el-modal').classList.remove('open')}
+document.getElementById('el-modal').addEventListener('click',e=>{if(e.target.id==='el-modal')closeModal()});
+
+// REACTIONS
+const REACTIONS=[
+  {type:'SÍNTESE',color:'#00d4ff',title:'Síntese da Água',eq:'2 H₂ + O₂ → 2 H₂O',desc:'Combinação de hidrogênio e oxigênio com liberação de enorme energia (ΔH = −286 kJ/mol). Reação de foguetes criogênicos NASA.',tag:'Exotérmica'},
+  {type:'DECOMPOSIÇÃO',color:'#ff6b35',title:'Eletrólise da Água',eq:'2 H₂O → 2 H₂ + O₂',desc:'Decomposição por energia elétrica. Base da produção de hidrogênio verde — combustível limpo e sustentável do futuro.',tag:'Endotérmica'},
+  {type:'SIMPLES TROCA',color:'#7fff00',title:'Ferro e Sulfato de Cobre',eq:'Fe + CuSO₄ → FeSO₄ + Cu',desc:'Metal mais ativo desloca o menos ativo. Solução azul torna-se verde-pálida e cobre se deposita. Demonstra série de reatividade.',tag:'Redox'},
+  {type:'DUPLA TROCA',color:'#bf5fff',title:'Precipitação do AgCl',eq:'AgNO₃ + NaCl → AgCl↓ + NaNO₃',desc:'Precipitado branco de AgCl insolúvel. Reação usada em análise gravimétrica para detectar e quantificar íons cloreto.',tag:'Precipitação'},
+  {type:'COMBUSTÃO',color:'#ffd43b',title:'Combustão do Metano',eq:'CH₄ + 2 O₂ → CO₂ + 2 H₂O',desc:'Combustão completa do gás natural (ΔH = −890 kJ/mol). Base do aquecimento doméstico e geração termelétrica.',tag:'Exotérmica'},
+  {type:'NEUTRALIZAÇÃO',color:'#63e6be',title:'Neutralização Ácido-Base',eq:'HCl + NaOH → NaCl + H₂O',desc:'Ácido forte + base forte formam sal e água. ΔH = −57.3 kJ/mol. Fundamento das titulações volumétricas de laboratório.',tag:'Exotérmica'},
+  {type:'OXIRREDUÇÃO',color:'#f783ac',title:'Formação da Ferrugem',eq:'4 Fe + 3 O₂ + 6 H₂O → 4 Fe(OH)₃',desc:'Oxidação lenta do ferro em presença de O₂ e umidade. Processo eletroquímico causando perdas bilionárias anuais na indústria.',tag:'Redox Lenta'},
+  {type:'INDUSTRIAL',color:'#74c0fc',title:'Processo Haber-Bosch',eq:'N₂ + 3 H₂ ⇌ 2 NH₃',desc:'Síntese da amônia a 400-500°C, 150-300 atm, catalisador de Fe. Responsável por fertilizar metade da produção agrícola mundial.',tag:'Equilíbrio'},
+];
+const rw=document.getElementById('reactions-wrap');
+REACTIONS.forEach(r=>{
+  const d=document.createElement('div');
+  d.className='reaction-card reveal';
+  d.style.cssText=`color:${r.color};border-left-color:${r.color}`;
+  d.innerHTML=`<div class="reaction-type">${r.type}</div><div class="reaction-title">${r.title}</div><div class="reaction-eq">${r.eq}</div><div class="reaction-desc">${r.desc}</div><div class="reaction-tag" style="color:${r.color};border-color:${r.color}">${r.tag}</div>`;
+  rw.appendChild(d);obs.observe(d);
+});
+
+// TABS
+function showTab(id){
+  document.querySelectorAll('.sim-tab').forEach((t,i)=>t.classList.toggle('active',['ph','molar','bal'][i]===id));
+  document.querySelectorAll('.sim-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+}
+
+// pH
+const PH_DATA=[
+  {r:[0,1],l:'ÁCIDO FORTE',c:'#ff2222',d:'HCl concentrado, H₂SO₄. Extremamente corrosivos, destroem tecidos vivos rapidamente. [H⁺] > 0.1 mol/L.',ex:['HCl conc.','H₂SO₄']},
+  {r:[1,3],l:'MUITO ÁCIDO',c:'#ff6633',d:'Suco gástrico (pH~2), limão (2.4). Altamente corrosivo ao contato prolongado. Desmineralização óssea.',ex:['Suco gástrico','Limão (2.4)']},
+  {r:[3,5],l:'ÁCIDO',c:'#ff9900',d:'Refrigerantes, café, laranja. Provoca desmineralização do esmalte dentário com exposição prolongada.',ex:['Café (5)','Refrigerante (3)','Laranja (3.5)']},
+  {r:[5,6.5],l:'LEVEMENTE ÁCIDO',c:'#ddcc00',d:'Chuva natural (5.6 por CO₂), urina humana (4.5–8). Relativamente seguro para pele.',ex:['Chuva (5.6)','Urina (6)']},
+  {r:[6.5,7.5],l:'NEUTRO',c:'#44ff44',d:'Água pura a 25°C: pH = 7. Sangue humano mantido entre 7.35–7.45 — desvio > 0.4 é fatal.',ex:['Água pura (7)','Sangue (7.4)']},
+  {r:[7.5,9],l:'LEVEMENTE BÁSICO',c:'#44ccff',d:'Água do mar (8.2), bicarbonato de sódio. Levemente adstringente. Geralmente seguro para pele.',ex:['Mar (8.2)','Bicarbonato']},
+  {r:[9,11],l:'BÁSICO',c:'#4488ff',d:'Sabão (10), leite de magnésia. Sensação escorregadia ao toque — saponificação das gorduras da pele.',ex:['Sabão (10)','Leite Magnésio']},
+  {r:[11,13],l:'MUITO BÁSICO',c:'#6633ff',d:'Amônia doméstica, água sanitária diluída. Irritante para mucosas. Use luvas e ventilação.',ex:['Amônia (11.6)','Agua Sanitária']},
+  {r:[13,15],l:'BASE FORTE',c:'#cc44ff',d:'NaOH concentrado, KOH. Corrosivo como ácidos fortes — queimaduras graves por saponificação.',ex:['NaOH (14)','KOH']},
+];
+function sup(n){const s={'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};return String(n).split('').map(c=>s[c]||c).join('')}
+function fSci(n){const e=Math.floor(Math.log10(n));return (n/Math.pow(10,e)).toFixed(2)+'×10'+sup(e)}
+function updatePH(){
+  const v=parseFloat(document.getElementById('ph-slider').value);
+  document.getElementById('ph-num').textContent=v.toFixed(1);
+  document.getElementById('poh-val').textContent=(14-v).toFixed(1);
+  document.getElementById('h-conc').textContent=fSci(Math.pow(10,-v));
+  document.getElementById('oh-conc').textContent=fSci(Math.pow(10,v-14));
+  const info=PH_DATA.find(d=>v>=d.r[0]&&v<d.r[1])||PH_DATA[PH_DATA.length-1];
+  document.getElementById('ph-num').style.color=info.c;
+  document.getElementById('ph-label').style.color=info.c;
+  document.getElementById('ph-label').textContent=info.l;
+  document.getElementById('ph-desc').textContent=info.d;
+  document.getElementById('ph-type').textContent=v<6.9?'Ácido':v>7.1?'Base':'Neutro';
+  document.getElementById('ph-examples').innerHTML=info.ex.map(e=>`<div class="ph-ex" style="border-color:${info.c};color:${info.c};background:${info.c}18">${e}</div>`).join('');
+}
+document.getElementById('ph-slider').addEventListener('input',updatePH);
+updatePH();
+
+// MOLAR MASS
+const AM={H:1.008,He:4.003,Li:6.941,Be:9.012,B:10.811,C:12.011,N:14.007,O:15.999,F:18.998,Ne:20.180,Na:22.990,Mg:24.305,Al:26.982,Si:28.086,P:30.974,S:32.065,Cl:35.453,Ar:39.948,K:39.098,Ca:40.078,Sc:44.956,Ti:47.867,V:50.942,Cr:51.996,Mn:54.938,Fe:55.845,Co:58.933,Ni:58.693,Cu:63.546,Zn:65.38,Ga:69.723,Ge:72.630,As:74.922,Se:78.971,Br:79.904,Kr:83.798,Rb:85.468,Sr:87.62,Ag:107.868,Sn:118.710,I:126.904,Xe:131.293,Ba:137.327,Pt:195.084,Au:196.967,Hg:200.592,Pb:207.2,U:238.029};
+function parseF(f){const r={},re=/([A-Z][a-z]?)(\d*)/g;let m;while((m=re.exec(f))!==null)if(m[1]){const s=m[1],c=parseInt(m[2]||'1');r[s]=(r[s]||0)+c}return r}
+function calcMolar(){
+  const f=document.getElementById('molar-input').value.trim();
+  const parts=parseF(f);let total=0,rows=[];
+  for(const[s,c]of Object.entries(parts)){const m=AM[s];if(m){const sub=m*c;total+=sub;rows.push({s,c,m,sub})}}
+  document.getElementById('molar-val').textContent=total>0?total.toFixed(3):'—';
+  document.getElementById('molar-tbody').innerHTML=rows.map(r=>`<tr><td>${r.s}</td><td>${r.c}</td><td>${r.m.toFixed(3)}</td><td style="color:var(--accent)">${r.sub.toFixed(3)}</td></tr>`).join('');
+}
+calcMolar();
+
+// BALANCER
+const BPR=[{r:'H2 + O2',p:'H2O',l:'Água'},{r:'C + O2',p:'CO2',l:'Combustão C'},{r:'N2 + H2',p:'NH3',l:'Amônia'},{r:'Fe + O2',p:'Fe2O3',l:'Ferrugem'},{r:'CH4 + O2',p:'CO2 + H2O',l:'Metano'},{r:'HCl + NaOH',p:'NaCl + H2O',l:'Neutralização'}];
+const BMAP={'H2+O2|H2O':'2H₂ + O₂ → 2H₂O','C+O2|CO2':'C + O₂ → CO₂','N2+H2|NH3':'N₂ + 3H₂ → 2NH₃','Fe+O2|Fe2O3':'4Fe + 3O₂ → 2Fe₂O₃','CH4+O2|CO2+H2O':'CH₄ + 2O₂ → CO₂ + 2H₂O','HCl+NaOH|NaCl+H2O':'HCl + NaOH → NaCl + H₂O'};
+const BEXP={'H2+O2|H2O':'4H nos reagentes (2×H₂) → 2H₂O nos produtos. 2H₂O tem 2O → 1O₂. Balanceado!','N2+H2|NH3':'N₂ fornece 2N → 2NH₃. 2NH₃ tem 6H → 3H₂.','Fe+O2|Fe2O3':'Fe₂O₃ tem 3O → 1.5O₂. Para inteiros: ×2 → 4Fe + 3O₂ → 2Fe₂O₃.','CH4+O2|CO2+H2O':'C→1CO₂. H₄→2H₂O. O nos produtos: 2+2=4 → 2O₂.','HCl+NaOH|NaCl+H2O':'Neutralização simples — todos coeficientes = 1.'};
+const pd=document.getElementById('bal-presets');
+BPR.forEach(p=>{const b=document.createElement('button');b.className='btn-s';b.style='padding:7px 14px;font-size:11px';b.textContent=p.l;b.onclick=()=>{document.getElementById('bal-reactants').value=p.r;document.getElementById('bal-products').value=p.p;balanceEq()};pd.appendChild(b)});
+function balanceEq(){
+  const r=document.getElementById('bal-reactants').value.trim().replace(/\s/g,'');
+  const p=document.getElementById('bal-products').value.trim().replace(/\s/g,'');
+  const k=r+'|'+p;
+  document.getElementById('bal-result').innerHTML=BMAP[k]?`<span style="color:#7fff00">✓ &nbsp;</span>${BMAP[k]}`:`<span style="color:var(--muted)">Não encontrado. Tente os exemplos acima.</span>`;
+  document.getElementById('bal-exp').textContent=BEXP[k]||'';
+}
+
+// CONCEPTS
+const CONCEPTS=[
+  {icon:'⚛️',c:'#00d4ff',t:'Teoria Atômica',d:'Prótons e nêutrons no núcleo, elétrons em orbitais quânticos. O modelo orbital (mecânica quântica) substituiu o planetário de Bohr. Configuração eletrônica determina propriedades químicas.'},
+  {icon:'🔗',c:'#7fff00',t:'Ligações Químicas',d:'Iônicas (transferência e⁻: metal+não-metal), covalentes (compartilhamento: não-metais) e metálicas (e⁻ deslocalizados). A eletronegatividade determina o tipo e polaridade da ligação.'},
+  {icon:'⚖️',c:'#bf5fff',t:'Estequiometria',d:'Relações quantitativas entre reagentes e produtos. Lei de Lavoisier (conservação da massa). Mol (6.022×10²³ partículas): unidade fundamental para cálculo de reagente limitante e rendimento.'},
+  {icon:'🌊',c:'#ff6b35',t:'Soluções',d:'Mistura homogênea soluto+solvente. Concentração em mol/L (molaridade). Propriedades coligativas (pressão osmótica, ponto de ebulição e congelamento) dependem do nº de partículas.'},
+  {icon:'⚡',c:'#ffd43b',t:'Eletroquímica',d:'Pilhas galvânicas convertem energia química em elétrica. Eletrólise força reações não-espontâneas. Potencial padrão de redução (E°) determina espontaneidade das reações redox.'},
+  {icon:'🌡️',c:'#f783ac',t:'Termodinâmica',d:'ΔH: calor trocado a P constante. ΔG = ΔH − TΔS: espontaneidade (ΔG < 0). ΔS: entropia (desordem). Lei de Hess: ΔH independe do caminho reacional.'},
+  {icon:'⏱️',c:'#63e6be',t:'Cinética Química',d:'Velocidade depende de T (Arrhenius: k=A·e^(−Ea/RT)), concentração e catalisadores. Lei da velocidade: v=k[A]ᵐ[B]ⁿ. Catalisadores reduzem Ea sem alterar ΔG.'},
+  {icon:'🔄',c:'#74c0fc',t:'Equilíbrio Químico',d:'Estado dinâmico onde velocidades direta e inversa se igualam. Kc=[produtos]/[reagentes]. Le Chatelier: sistema minimiza perturbações externas (T, P, concentração).'},
+  {icon:'🧪',c:'#a9e34b',t:'Ácidos e Bases',d:'Arrhenius: H⁺/OH⁻. Brønsted-Lowry: doador/receptor de próton. Lewis: receptor/doador de par e⁻. pH = −log[H⁺]. Tampão resiste a variações de pH (Henderson-Hasselbalch).'},
+  {icon:'🔬',c:'#ff8787',t:'Química Orgânica',d:'Compostos de carbono. Grupos funcionais: −OH, −COOH, −CO−, −NH₂. Isomeria plana e espacial (quiralidade, enantiômeros). Reações: substituição, adição, eliminação.'},
+  {icon:'💎',c:'#da77f2',t:'Cristalografia',d:'Redes cristalinas regulares. Iônica (NaCl), covalente (diamante), metálica (Fe), molecular (gelo). Difração de raios-X para determinação de estrutura — Lei de Bragg: nλ = 2d·senθ.'},
+  {icon:'☢️',c:'#ffa94d',t:'Radioatividade',d:'Decaimento nuclear: alfa (²₄He), beta (e⁻/e⁺), gama (EM). N = N₀·e^(−λt). Meia-vida t½ = ln2/λ. Fissão (U-235) e fusão (H→He) liberam E = mc².'},
+];
+const cg=document.getElementById('concepts-grid');
+CONCEPTS.forEach(c=>{const d=document.createElement('div');d.className='concept-card reveal';d.style.color=c.c;d.innerHTML=`<span class="concept-icon">${c.icon}</span><div class="concept-title">${c.t}</div><div class="concept-text">${c.d}</div><div class="concept-more">APROFUNDAR →</div>`;cg.appendChild(d);obs.observe(d)});
+
+// STATES OF MATTER
+function drawSolid(){
+  const c=document.getElementById('solid-canvas');c.width=c.offsetWidth;c.height=130;const x=c.getContext('2d');
+  const ps=[];const cols=8,rows=4,sx=c.width/(cols+1),sy=130/(rows+1);
+  for(let r=0;r<rows;r++)for(let col=0;col<cols;col++)ps.push({bx:(col+1)*sx,by:(r+1)*sy,ph:Math.random()*Math.PI*2});
+  (function a(t){x.clearRect(0,0,c.width,130);ps.forEach(p=>{const px=p.bx+Math.sin(t*.003+p.ph)*1.5,py=p.by+Math.cos(t*.003+p.ph+1)*1.5;x.beginPath();x.arc(px,py,5,0,6.28);x.fillStyle='rgba(116,192,252,.85)';x.fill()});requestAnimationFrame(a)})(0);
+}
+function drawLiquid(){
+  const c=document.getElementById('liquid-canvas');c.width=c.offsetWidth;c.height=130;const x=c.getContext('2d');
+  const ps=Array.from({length:26},()=>({x:Math.random()*c.width,y:Math.random()*130,vx:(Math.random()-.5)*1.2,vy:(Math.random()-.5)*1.2}));
+  (function a(){x.clearRect(0,0,c.width,130);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<5||p.x>c.width-5)p.vx*=-1;if(p.y<5||p.y>125)p.vy*=-1;x.beginPath();x.arc(p.x,p.y,5,0,6.28);x.fillStyle='rgba(0,212,255,.8)';x.fill()});for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++){const d=Math.hypot(ps[i].x-ps[j].x,ps[i].y-ps[j].y);if(d<40){x.beginPath();x.moveTo(ps[i].x,ps[i].y);x.lineTo(ps[j].x,ps[j].y);x.strokeStyle=`rgba(0,212,255,${.3*(1-d/40)})`;x.lineWidth=1;x.stroke()}}requestAnimationFrame(a)})();
+}
+function drawGas(){
+  const c=document.getElementById('gas-canvas');c.width=c.offsetWidth;c.height=130;const x=c.getContext('2d');
+  const ps=Array.from({length:16},()=>({x:Math.random()*c.width,y:Math.random()*130,vx:(Math.random()-.5)*3.5,vy:(Math.random()-.5)*3.5,r:Math.random()*2+3}));
+  (function a(){x.clearRect(0,0,c.width,130);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<p.r||p.x>c.width-p.r)p.vx*=-1;if(p.y<p.r||p.y>130-p.r)p.vy*=-1;x.beginPath();x.arc(p.x,p.y,p.r,0,6.28);x.fillStyle='rgba(169,227,75,.85)';x.fill()});requestAnimationFrame(a)})();
+}
+setTimeout(()=>{drawSolid();drawLiquid();drawGas()},300);
+
+// QUIZ
+const QS=[
+  {q:'Qual é o número atômico do Carbono?',o:['4','6','8','12'],a:1,e:'Carbono tem 6 prótons → número atômico 6. Base de toda química orgânica — mais de 10 milhões de compostos.'},
+  {q:'Qual ligação ocorre entre dois não-metais?',o:['Iônica','Metálica','Covalente','Van der Waals'],a:2,e:'Covalente: compartilhamento de pares de elétrons entre não-metais. Exemplos: H₂O, CO₂, CH₄.'},
+  {q:'O pH de uma solução ácida é:',o:['Maior que 7','Igual a 7','Menor que 7','Igual a 14'],a:2,e:'pH = −log[H⁺]. Ácido tem [H⁺] > 10⁻⁷ mol/L → pH < 7. Neutro: pH 7. Base: pH > 7.'},
+  {q:'Quantos átomos há em 1 mol de substância?',o:['6.022×10²³','3.14×10²³','1.00×10²⁴','6.022×10²⁴'],a:0,e:'Número de Avogadro (6.022×10²³). Determinado por Jean Perrin (1909). Converte massa ↔ nº de partículas.'},
+  {q:'Qual metal tem o maior ponto de fusão?',o:['Ferro','Tungstênio','Platina','Ósmio'],a:1,e:'Tungstênio (W): ponto de fusão 3422°C — o mais alto entre os metais. Por isso é usado em filamentos de lâmpada.'},
+  {q:'Na reação CH₄ + xO₂ → CO₂ + 2H₂O, o coeficiente x é:',o:['1','2','3','4'],a:1,e:'C→1CO₂ ✓. H₄→2H₂O ✓. O nos produtos: 2+2=4. Nos reagentes precisamos 4O → x=2.'},
+  {q:'Qual gás é mais abundante na atmosfera?',o:['Oxigênio','Dióxido de carbono','Nitrogênio','Argônio'],a:2,e:'N₂ compõe ~78% da atmosfera. O₂ ~21%, Ar ~0.93%. N₂ é muito estável pela tripla ligação N≡N (945 kJ/mol).'},
+  {q:'ΔH negativo indica que uma reação é:',o:['Lenta','Endotérmica','Exotérmica','Reversível'],a:2,e:'ΔH < 0 → exotérmica: libera calor ao ambiente. ΔH > 0 → endotérmica: absorve calor do ambiente.'},
+  {q:'Qual princípio explica o deslocamento do equilíbrio?',o:['Hess','Le Chatelier','Avogadro','Dalton'],a:1,e:'Princípio de Le Chatelier (1884): o equilíbrio se desloca para minimizar perturbações externas (T, P, concentração).'},
+  {q:'Fórmula do ácido sulfúrico:',o:['HCl','H₂SO₄','H₃PO₄','HNO₃'],a:1,e:'H₂SO₄ — ácido sulfúrico, diprotónico, forte. Processo de contato: SO₂→SO₃→H₂SO₄. Produto industrial mais produzido no mundo.'},
+];
+let qi=0,sc=0,ans=false;
+function renderQuiz(){
+  const qa=document.getElementById('quiz-area'),pg=document.getElementById('quiz-progress');
+  pg.innerHTML=QS.map((_,i)=>`<div class="quiz-pip${i<qi?' done':i===qi?' active':''}"></div>`).join('');
+  if(qi>=QS.length){qa.innerHTML=`<div class="quiz-card"><div class="quiz-result"><div class="quiz-score">${sc}/${QS.length}</div><div style="font-size:16px;color:var(--muted);margin-top:8px">${sc>=9?'Perfeito! 🏆':sc>=7?'Excelente! 🎯':sc>=5?'Bom trabalho! 👍':'Continue estudando! 📚'}</div><p style="color:var(--muted);margin-top:12px;font-size:14px">Acertou ${Math.round(sc/QS.length*100)}%</p><button class="quiz-restart" onclick="restartQuiz()">TENTAR NOVAMENTE</button></div></div>`;return}
+  const q=QS[qi];ans=false;
+  qa.innerHTML=`<div class="quiz-card"><div class="quiz-q-num">QUESTÃO ${qi+1} DE ${QS.length}</div><div class="quiz-question">${q.q}</div><div class="quiz-options">${q.o.map((o,i)=>`<button class="quiz-opt" onclick="answer(${i})">${o}</button>`).join('')}</div><div class="quiz-feedback" id="qf"></div><button class="quiz-next" id="qn" onclick="nextQ()">PRÓXIMA →</button></div>`;
+}
+function answer(i){if(ans)return;ans=true;const q=QS[qi];const opts=document.querySelectorAll('.quiz-opt');opts.forEach(o=>o.disabled=true);opts[q.a].classList.add('correct');const fb=document.getElementById('qf');if(i===q.a){sc++;fb.className='quiz-feedback show ok';fb.textContent='✓ Correto! '+q.e}else{opts[i].classList.add('wrong');fb.className='quiz-feedback show fail';fb.textContent='✗ Errado. '+q.e}document.getElementById('qn').classList.add('show')}
+function nextQ(){qi++;renderQuiz()}
+function restartQuiz(){qi=0;sc=0;renderQuiz()}
+renderQuiz();
+
+// GLOSSARY
+const GLOSS=[
+  {t:'Átomo',d:'Menor unidade de um elemento que mantém suas propriedades químicas. Prótons+nêutrons no núcleo, elétrons em orbitais. Diâmetro ~10⁻¹⁰ m.',tags:['estrutura','básico']},
+  {t:'Mol',d:'Unidade SI: 1 mol = 6.022×10²³ partículas (Avogadro). Massa molar em g/mol = massa atômica em u. Permite converter massa ↔ número de partículas.',tags:['estequiometria','unidade']},
+  {t:'Eletronegatividade',d:'Capacidade de atrair elétrons de ligação. Flúor é o mais eletronegativo (3.98, escala de Pauling). Determina polaridade e tipo de ligação química.',tags:['ligações','propriedade']},
+  {t:'Isótopo',d:'Átomos do mesmo elemento com números de nêutrons diferentes. ¹²C (98.9%) e ¹⁴C (radioativo, datação arqueológica). Mesmas propriedades químicas, diferentes propriedades nucleares.',tags:['nuclear','estrutura']},
+  {t:'Entalpia (ΔH)',d:'Calor trocado a pressão constante. ΔH < 0: exotérmica. ΔH > 0: endotérmica. Lei de Hess: ΔH total independe do caminho reacional percorrido.',tags:['termodinâmica']},
+  {t:'Entropia (ΔS)',d:'Medida da desordem molecular. Processos espontâneos tendem a aumentar a entropia total do universo. ΔS universo > 0 (2ª Lei da Termodinâmica).',tags:['termodinâmica']},
+  {t:'Catalisador',d:'Aumenta a velocidade de reação ao diminuir a energia de ativação (Ea), sem ser consumido. Homogêneo (mesma fase) ou heterogêneo. Não altera ΔG.',tags:['cinética']},
+  {t:'Oxidação',d:'Perda de elétrons — número de oxidação aumenta. Sempre acompanhada de redução (par redox). O agente oxidante é a espécie que sofre redução.',tags:['redox','eletroquímica']},
+  {t:'Redução',d:'Ganho de elétrons — número de oxidação diminui. Sempre acompanhada de oxidação. O agente redutor é a espécie que sofre oxidação.',tags:['redox','eletroquímica']},
+  {t:'Hidrólise',d:'Quebra de ligação pela adição de água. Fundamental na digestão (proteínas, gorduras, carboidratos). Pode ser ácida, básica ou enzimática.',tags:['orgânica','bioquímica']},
+  {t:'Isomeria',d:'Compostos com mesma fórmula molecular mas estruturas diferentes. Plana (constitucional) ou espacial: geométrica (cis/trans) e óptica (quiralidade, enantiômeros).',tags:['orgânica']},
+  {t:'pH',d:'Escala logarítmica 0–14: pH = −log[H⁺]. Cada unidade = variação de 10× em [H⁺]. Neutro: 7. Ácido: < 7. Básico: > 7.',tags:['ácidos','bases']},
+  {t:'Solução Tampão',d:'Resiste a variações de pH. Ácido fraco + base conjugada. Equação de Henderson-Hasselbalch: pH = pKa + log([A⁻]/[HA]).',tags:['equilíbrio','ácidos']},
+  {t:'Polímero',d:'Macromolécula de monômeros ligados covalentemente. Natural (celulose, DNA, proteínas) ou sintético (polietileno, nylon). Por adição ou condensação.',tags:['orgânica','materiais']},
+  {t:'Número de Oxidação',d:'Carga hipotética se todos os e⁻ fossem ao átomo mais eletronegativo. Regras: O = −2, H = +1, soma em composto = 0.',tags:['redox']},
+  {t:'Energia de Ativação (Ea)',d:'Energia mínima para que colisões gerem reação. Catalisadores diminuem Ea. Arrhenius: k = A·e^(−Ea/RT). Temperatura eleva k exponencialmente.',tags:['cinética','termodinâmica']},
+  {t:'Constante de Equilíbrio (K)',d:'Kc = [produtos]^n / [reagentes]^m. K >> 1: produtos favorecidos. K << 1: reagentes favorecidos. Varia com temperatura.',tags:['equilíbrio']},
+  {t:'Eletrólito',d:'Produz íons em solução, conduzindo eletricidade. Forte: ionização completa (HCl, NaOH, NaCl). Fraco: ionização parcial (CH₃COOH, NH₃), caracterizado por Ka/Kb.',tags:['soluções','eletroquímica']},
+  {t:'Orbital',d:'Região do espaço com ~90% de probabilidade de encontrar um elétron. s (esférico), p (halter), d, f. Preenchidos por Aufbau, Pauli e Hund.',tags:['estrutura','quântica']},
+  {t:'Hibridização',d:'Mistura de orbitais atômicos formando híbridos de mesma energia. sp (linear, 180°): acetileno. sp² (trigonal, 120°): etileno. sp³ (tetraédrico, 109.5°): metano.',tags:['ligações','orgânica']},
+  {t:'Ligação de Hidrogênio',d:'Interação H (ligado a F, O ou N) com átomo eletronegativo vizinho. Responsável pelas propriedades únicas da água: ponto de ebulição alto, tensão superficial, expansão ao congelar.',tags:['intermolecular']},
+  {t:'Radioatividade',d:'Emissão espontânea por núcleos instáveis. Alfa (²₄He, curto alcance). Beta (e⁻ ou e⁺). Gama (radiação EM, alta penetração). N = N₀·e^(−λt).',tags:['nuclear']},
+  {t:'Meia-vida (t½)',d:'Tempo para que metade de uma amostra radioativa decaia. t½ = ln2/λ. Constante para cada isótopo: C-14 (5730 anos), U-238 (4.47×10⁹ anos).',tags:['nuclear']},
+  {t:'Propriedades Coligativas',d:'Dependem do nº de partículas, não da natureza. Quatro: abaixamento pressão de vapor (Raoult), elevação ebullioscópica (ΔTb=Kb·m), crioscopia, pressão osmótica (π=MRT).',tags:['soluções']},
+  {t:'Estequiometria',d:'Calcula quantidades de reagentes e produtos. Lei de conservação de massa (Lavoisier). Inclui reagente limitante, excesso e rendimento percentual.',tags:['cálculo','básico']},
+];
+function renderGloss(f=''){
+  const items=GLOSS.filter(g=>g.t.toLowerCase().includes(f.toLowerCase())||g.d.toLowerCase().includes(f.toLowerCase()));
+  document.getElementById('gloss-list').innerHTML=items.map(g=>`<div class="gloss-item"><div class="gloss-term">${g.t}</div><div class="gloss-def">${g.d}</div><div class="gloss-tags">${g.tags.map(t=>`<span class="gloss-tag">${t}</span>`).join('')}</div></div>`).join('')||'<div style="color:var(--muted);padding:20px;font-family:Space Mono,monospace;font-size:13px">Nenhum resultado.</div>';
+}
+function filterGloss(){renderGloss(document.getElementById('gloss-search').value)}
+renderGloss();
+</script>
+</body>
+</html>
